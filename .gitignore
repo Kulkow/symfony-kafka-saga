@@ -1,0 +1,54 @@
+# Composer dependencies and Symfony runtime files
+/vendor/
+/var/
+/app/vendor/
+/app/var/
+
+# Generated Symfony configuration reference
+/app/config/reference.php
+
+# Local environment overrides and generated environment cache
+/.env.local
+/.env.*.local
+/.env.local.php
+/app/.env.local
+/app/.env.*.local
+/app/.env.local.php
+
+# Symfony secrets: keep private decryption keys out of Git
+/config/secrets/*/*.decrypt.private.php
+/app/config/secrets/*/*.decrypt.private.php
+
+# Frontend dependencies and generated assets
+/node_modules/
+/public/build/
+/public/bundles/
+/public/assets/
+/assets/vendor/
+/app/node_modules/
+/app/public/build/
+/app/public/bundles/
+/app/public/assets/
+/app/assets/vendor/
+
+# Test caches and coverage reports
+/.phpunit.cache/
+/.phpunit.result.cache
+/.phpunit/
+/coverage/
+/app/.phpunit.cache/
+/app/.phpunit.result.cache
+/app/.phpunit/
+/app/coverage/
+
+# Local Docker Compose overrides
+/docker-compose.override.yml
+/docker-compose.override.yaml
+/compose.override.yml
+/compose.override.yaml
+
+# IDE and operating system files
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db

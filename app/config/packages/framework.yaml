@@ -1,0 +1,13 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    router:
+        utf8: true
+    php_errors:
+        log: true
+    serializer: true
+    validation: true
+    cache:
+        prefix_seed: symfony-kafka-saga
+        app: cache.adapter.redis
+        default_redis_provider: '%env(REDIS_URL)%'
+    lock: '%env(REDIS_URL)%'

@@ -1,0 +1,31 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+    orm:
+        auto_mapping: false
+        mappings:
+            Catalog:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Modules/Catalog/Infrastructure/Persistence/Entity'
+                prefix: 'App\Modules\Catalog\Infrastructure\Persistence\Entity'
+            Order:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Modules/Order/Infrastructure/Persistence/Entity'
+                prefix: 'App\Modules\Order\Infrastructure\Persistence\Entity'
+            Supply:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Modules/Supply/Infrastructure/Persistence/Entity'
+                prefix: 'App\Modules\Supply\Infrastructure\Persistence\Entity'
+            Warehouse:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Modules/Warehouse/Infrastructure/Persistence/Entity'
+                prefix: 'App\Modules\Warehouse\Infrastructure\Persistence\Entity'
+            Shared:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Shared/Infrastructure/Persistence/Entity'
+                prefix: 'App\Shared\Infrastructure\Persistence\Entity'

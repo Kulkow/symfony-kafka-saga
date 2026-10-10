@@ -1,0 +1,7 @@
+infrastructure:
+    resource: '../src/Shared/Infrastructure/Http/'
+    type: attribute
+
+modules:
+    resource: '../src/Modules/'
+    type: attribute
