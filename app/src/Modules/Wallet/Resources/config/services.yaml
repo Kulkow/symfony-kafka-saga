@@ -1,0 +1,18 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Wallet\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Application/Command/'
+            - '../../Resources/'
+            - '../../Tests/'
+            - '../../Infrastructure/Migrations/'
+            - '../../Infrastructure/Persistence/Doctrine/WalletRecord.php'
+
+    App\Modules\Wallet\Domain\WalletRepository: '@App\Modules\Wallet\Infrastructure\Persistence\Doctrine\DoctrineWalletRepository'
+    App\Modules\Wallet\Domain\WalletIdGenerator: '@App\Modules\Wallet\Infrastructure\Identity\UuidV7WalletIdGenerator'
+    App\Modules\Wallet\Application\TransactionManager: '@App\Modules\Wallet\Infrastructure\Persistence\Doctrine\DoctrineTransactionManager'

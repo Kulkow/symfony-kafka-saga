@@ -1,0 +1,4 @@
+framework:
+    test: true
+    cache:
+        app: cache.adapter.array

@@ -5,3 +5,4 @@ infrastructure:
 modules:
     resource: '../src/Modules/'
     type: attribute
+    exclude: '../src/Modules/*/Tests/'

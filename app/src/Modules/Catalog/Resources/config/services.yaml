@@ -1,0 +1,18 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Catalog\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Application/Contract/'
+            - '../../Resources/'
+            - '../../Infrastructure/Migrations/'
+            - '../../Infrastructure/Persistence/Entity/'
+
+    App\Modules\Catalog\Domain\ProductRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmProductRepository'
+    App\Modules\Catalog\Domain\MaterialRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmMaterialRepository'
+    App\Modules\Catalog\Domain\MeasureUnitRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmMeasureUnitRepository'
+    App\Modules\Catalog\Application\Contract\CatalogReader: '@App\Modules\Catalog\Application\CatalogService'

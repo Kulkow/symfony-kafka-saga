@@ -16,7 +16,8 @@ final class OrmMaterialRepository implements MaterialRepository
     public function nextIdentity(): int { return $this->identities->next('catalog.materials'); }
     public function find(int $id): ?Material
     {
-        $record = $this->entityManager->find(MaterialRecord::class, $id);
+        $record = $this->entityManager->find(MaterialRecord::class,
+            $id);
         return $record === null ? null : new Material($record->id, $record->title, $record->measureUnitId);
     }
     public function save(Material $material): void

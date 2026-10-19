@@ -1,0 +1,17 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Warehouse\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Application/Contract/'
+            - '../../Resources/'
+            - '../../Infrastructure/Migrations/'
+            - '../../Infrastructure/Persistence/Entity/'
+
+    App\Modules\Warehouse\Domain\WarehouseRepository: '@App\Modules\Warehouse\Infrastructure\Persistence\OrmWarehouseRepository'
+    App\Modules\Warehouse\Application\ReservationPlanRepository: '@App\Modules\Warehouse\Infrastructure\Persistence\OrmReservationPlanRepository'
+    App\Modules\Warehouse\Application\Contract\WarehouseDirectory: '@App\Modules\Warehouse\Application\WarehouseService'

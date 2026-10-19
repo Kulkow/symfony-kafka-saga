@@ -1,8 +1,13 @@
 <?php
 declare(strict_types=1);
+
 namespace App\Modules\Supply\Infrastructure\Persistence;
+
 use App\Modules\Supply\Domain\{StatusChange, SupplyOrder, SupplyOrderRepository, SupplyStatus};
-use App\Modules\Supply\Infrastructure\Persistence\Entity\{SupplyOrderRecord, SupplyOrderMaterialRecord, SupplyOrderStatusLogRecord, SupplyOrderStatusRecord};
+use App\Modules\Supply\Infrastructure\Persistence\Entity\{SupplyOrderMaterialRecord,
+    SupplyOrderRecord,
+    SupplyOrderStatusLogRecord,
+    SupplyOrderStatusRecord};
 use App\Shared\Application\{EventPublisher, IdentityGenerator};
 use Doctrine\DBAL\{LockMode, Platforms\PostgreSQLPlatform};
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,11 +16,17 @@ final class OrmSupplyOrderRepository implements SupplyOrderRepository
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly IdentityGenerator $identities,
-        private readonly EventPublisher $events,
-    ) {}
+        private readonly IdentityGenerator      $identities,
+        private readonly EventPublisher         $events,
+    )
+    {
+    }
 
-    public function nextIdentity(): int { return $this->identities->next('supply.orders'); }
+    public function nextIdentity(): int
+    {
+        return $this->identities->next('supply.orders');
+    }
+
     public function find(int $id): ?SupplyOrder
     {
         $record = $this->entityManager->find(SupplyOrderRecord::class, $id, $this->lockMode(true));
@@ -24,11 +35,13 @@ final class OrmSupplyOrderRepository implements SupplyOrderRepository
             SupplyStatus::from($this->statusSlug(SupplyOrderStatusRecord::class, $record->statusId)),
             $this->history(SupplyOrderStatusLogRecord::class, 'supplyOrderId', SupplyOrderStatusRecord::class, $id));
     }
+
     public function findByRequest(int $requestId): ?SupplyOrder
     {
         $record = $this->entityManager->getRepository(SupplyOrderRecord::class)->findOneBy(['supplyRequestId' => $requestId]);
         return $record === null ? null : $this->find($record->id);
     }
+
     public function save(SupplyOrder $order): void
     {
         $this->requireTransaction();
@@ -52,7 +65,9 @@ final class OrmSupplyOrderRepository implements SupplyOrderRepository
             $this->entityManager->flush();
         }
         $this->saveHistory(SupplyOrderStatusLogRecord::class, 'supplyOrderId', SupplyOrderStatusRecord::class, $order->id, $order->history());
-        foreach ($order->releaseEvents() as $event) { $this->events->publish($event); }
+        foreach ($order->releaseEvents() as $event) {
+            $this->events->publish($event);
+        }
     }
 
     private function materials(string $class, string $parent, int $id): array
@@ -77,7 +92,9 @@ final class OrmSupplyOrderRepository implements SupplyOrderRepository
     private function saveHistory(string $class, string $parent, string $statuses, int $id, array $history): void
     {
         foreach ($history as $index => $change) {
-            if ($this->entityManager->getRepository($class)->findOneBy([$parent => $id, 'version' => $index + 1]) !== null) { continue; }
+            if ($this->entityManager->getRepository($class)->findOneBy([$parent => $id, 'version' => $index + 1]) !== null) {
+                continue;
+            }
             $record = new $class();
             $record->$parent = $id;
             $record->version = $index + 1;
@@ -92,7 +109,7 @@ final class OrmSupplyOrderRepository implements SupplyOrderRepository
     private function statusId(string $class, \BackedEnum $status): int
     {
         return ($this->entityManager->getRepository($class)->findOneBy(['slug' => $status->value])
-            ?? throw new \LogicException('Status dictionary entry missing: '.$status->value))->id;
+            ?? throw new \LogicException('Status dictionary entry missing: ' . $status->value))->id;
     }
 
     private function statusSlug(string $class, int $id): string

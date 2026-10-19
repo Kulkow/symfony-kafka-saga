@@ -31,7 +31,8 @@ use App\Modules\Order\Infrastructure\Migrations\Version20261010000400 as OrderMi
 use App\Modules\Supply\Infrastructure\Migrations\Version20261010000500 as SupplyMigration;
 use App\Modules\Warehouse\Infrastructure\Migrations\Version20261010000600 as WarehouseMigration;
 use App\Modules\Saga\Infrastructure\Migrations\Version20261010000700 as SagaMigration;
-const MODULE_MIGRATIONS = [CatalogMigration::class, OrderMigration::class, SupplyMigration::class, WarehouseMigration::class, SagaMigration::class];
+use App\Modules\Wallet\Infrastructure\Migrations\Version20261014000100 as WalletMigration;
+const MODULE_MIGRATIONS = [CatalogMigration::class, OrderMigration::class, SupplyMigration::class, WarehouseMigration::class, SagaMigration::class, WalletMigration::class];
 const MIGRATIONS = [SharedMigration::class, ...MODULE_MIGRATIONS];
 
 if (!class_exists(EntityManager::class)) {
@@ -516,7 +517,7 @@ $tests['migration discovery finds each module and orders timestamps across names
             $versions[] = new Doctrine\Migrations\Version\Version($class);
         }
     }
-    same(7, count($versions));
+    same(8, count($versions));
     $comparator = new App\Shared\Infrastructure\Persistence\MigrationComparator();
     usort($versions, $comparator->compare(...));
     $expected = ['DoctrineMigrations\\Version20261010000100', ...MIGRATIONS];
@@ -531,6 +532,86 @@ $tests['Unit of Work is cleared at the application transaction boundary'] = func
     same(true, $e->em->getUnitOfWork()->size() > 0);
     $e->transactions->run(static fn () => null);
     same(0, $e->em->getUnitOfWork()->size());
+};
+
+$tests['wallet repository persists balances, refreshes locking reads and requires transactions'] = function (): void {
+    $configuration = ORMSetup::createAttributeMetadataConfiguration([
+        dirname(__DIR__).'/src/Modules/Wallet/Infrastructure/Persistence/Doctrine',
+    ], true);
+    $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+    $db->executeStatement("ATTACH DATABASE ':memory:' AS wallet");
+    $db->executeStatement('CREATE TABLE wallet.wallets (id VARCHAR(255) PRIMARY KEY NOT NULL, user_id BIGINT NOT NULL, balance BIGINT NOT NULL)');
+    $configuration->enableNativeLazyObjects(true);
+    $em = new EntityManager($db, $configuration);
+    same([], (new Doctrine\ORM\Tools\SchemaValidator($em))->validateMapping());
+    $mapper = new App\Modules\Wallet\Infrastructure\Persistence\Doctrine\WalletMapper();
+    $repository = new App\Modules\Wallet\Infrastructure\Persistence\Doctrine\DoctrineWalletRepository($em, $mapper);
+    $transactions = new OrmTransactionManager($em);
+    $id = App\Modules\Wallet\Domain\WalletId::fromString('wallet-test');
+    $wallet = App\Modules\Wallet\Domain\Wallet::open($id, 42);
+    same(null, $repository->findById($id));
+    fails(fn () => $repository->add($wallet), LogicException::class);
+    fails(fn () => $repository->save($wallet), LogicException::class);
+    fails(fn () => $repository->findByIdForUpdate($id), LogicException::class);
+    $transactions->run(fn () => $repository->add($wallet));
+    same(42, $repository->findById($id)->userId);
+    same(true, $id->equals($repository->findById($id)->id));
+    same(0, $repository->findById($id)->balance());
+    fails(fn () => $transactions->run(fn () => $repository->add($wallet)), LogicException::class);
+    $transactions->run(function () use ($repository, $id): void {
+        $wallet = $repository->findByIdForUpdate($id);
+        $wallet->deposit(PHP_INT_MAX);
+        $wallet->withdraw(10);
+        $repository->save($wallet);
+    });
+    same(PHP_INT_MAX - 10, $repository->findById($id)->balance());
+    $transactions->run(function () use ($repository, $db, $id): void {
+        $db->executeStatement('UPDATE wallet.wallets SET balance = 100 WHERE id = ?', [$id->value]);
+        same(100, $repository->findByIdForUpdate($id)->balance());
+    });
+    fails(fn () => $transactions->run(function () use ($repository, $id): void {
+        $wallet = $repository->findByIdForUpdate($id);
+        $wallet->withdraw(50);
+        $repository->save($wallet);
+        throw new DomainViolation('Abort wallet update');
+    }));
+    same(100, $repository->findById($id)->balance());
+    $missing = App\Modules\Wallet\Domain\WalletId::fromString('missing-wallet');
+    same(null, $transactions->run(fn () => $repository->findByIdForUpdate($missing)));
+    fails(fn () => $transactions->run(fn () => $repository->save(
+        App\Modules\Wallet\Domain\Wallet::open($missing, 42)
+    )), LogicException::class);
+
+    $walletTransactions = new App\Modules\Wallet\Infrastructure\Persistence\Doctrine\DoctrineTransactionManager($transactions);
+    $open = new App\Modules\Wallet\Application\UseCase\OpenWalletUseCase(
+        $repository,
+        new App\Modules\Wallet\Infrastructure\Identity\UuidV7WalletIdGenerator(),
+        $walletTransactions,
+    );
+    $deposit = new App\Modules\Wallet\Application\UseCase\DepositMoneyUseCase($repository, $walletTransactions);
+    $withdraw = new App\Modules\Wallet\Application\UseCase\WithdrawMoneyUseCase($repository, $walletTransactions);
+    $openedId = $open->execute(new App\Modules\Wallet\Application\Command\OpenWalletCommand(43));
+    same(43, $repository->findById($openedId)->userId);
+    same(0, $repository->findById($openedId)->balance());
+    $deposit->execute(new App\Modules\Wallet\Application\Command\DepositMoneyCommand($openedId, 100));
+    $withdraw->execute(new App\Modules\Wallet\Application\Command\WithdrawMoneyCommand($openedId, 30));
+    same(70, $repository->findById($openedId)->balance());
+    fails(fn () => $withdraw->execute(new App\Modules\Wallet\Application\Command\WithdrawMoneyCommand($openedId, 71)),
+        App\Modules\Wallet\Domain\WalletException::class);
+    fails(fn () => $deposit->execute(new App\Modules\Wallet\Application\Command\DepositMoneyCommand($openedId, 0)),
+        App\Modules\Wallet\Domain\WalletException::class);
+    fails(fn () => $withdraw->execute(new App\Modules\Wallet\Application\Command\WithdrawMoneyCommand($openedId, -1)),
+        App\Modules\Wallet\Domain\WalletException::class);
+    fails(fn () => $deposit->execute(new App\Modules\Wallet\Application\Command\DepositMoneyCommand($openedId, PHP_INT_MAX)),
+        App\Modules\Wallet\Domain\WalletException::class);
+    same(70, $repository->findById($openedId)->balance());
+    fails(fn () => $deposit->execute(new App\Modules\Wallet\Application\Command\DepositMoneyCommand($missing, 10)),
+        App\Shared\Application\NotFound::class);
+    fails(fn () => $withdraw->execute(new App\Modules\Wallet\Application\Command\WithdrawMoneyCommand($missing, 10)),
+        App\Shared\Application\NotFound::class);
+    fails(fn () => $open->execute(new App\Modules\Wallet\Application\Command\OpenWalletCommand(0)));
+    same(2, (int) $db->fetchOne('SELECT COUNT(*) FROM wallet.wallets'));
+    same(false, $db->isTransactionActive());
 };
 
 $failed = 0;

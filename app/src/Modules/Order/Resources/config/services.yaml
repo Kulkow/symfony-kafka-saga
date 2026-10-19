@@ -1,0 +1,15 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Order\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Application/Contract/'
+            - '../../Resources/'
+            - '../../Infrastructure/Migrations/'
+            - '../../Infrastructure/Persistence/Entity/'
+
+    App\Modules\Order\Domain\OrderRepository: '@App\Modules\Order\Infrastructure\Persistence\OrmOrderRepository'

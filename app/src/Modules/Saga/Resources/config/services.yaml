@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Saga\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Resources/'
+            - '../../Infrastructure/Migrations/'
+
+    App\Modules\Saga\Infrastructure\Console\ConsumeSagaCommand:
+        arguments:
+            $topic: '%env(KAFKA_TOPIC)%'
+            $consumerGroup: '%env(KAFKA_CONSUMER_GROUP)%'

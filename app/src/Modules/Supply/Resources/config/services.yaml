@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\Modules\Supply\:
+        resource: '../../'
+        exclude:
+            - '../../Domain/'
+            - '../../Application/Contract/'
+            - '../../Resources/'
+            - '../../Infrastructure/Migrations/'
+            - '../../Infrastructure/Persistence/Entity/'
+
+    App\Modules\Supply\Domain\SupplyRequestRepository: '@App\Modules\Supply\Infrastructure\Persistence\OrmSupplyRequestRepository'
+    App\Modules\Supply\Domain\SupplyOrderRepository: '@App\Modules\Supply\Infrastructure\Persistence\OrmSupplyOrderRepository'

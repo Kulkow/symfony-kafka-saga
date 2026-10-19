@@ -34,12 +34,21 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "@php tests/run.php",
+        "test": ["@php tests/run.php", "@php vendor/bin/phpunit --testsuite \"Wallet Unit\""],
+        "test:wallet": "@php vendor/bin/phpunit --testsuite \"Wallet Unit\"",
+        "test:database:prepare": "@php bin/console test:database:prepare --env=test --no-debug",
+        "test:wallet:setup": "@test:database:prepare",
+        "test:wallet:integration": "@php vendor/bin/phpunit --testsuite \"Wallet Integration\"",
+        "test:wallet:concurrency": "@php vendor/bin/phpunit --testsuite \"Wallet Concurrency\"",
         "check": [
             "@php bin/console lint:yaml config",
             "@php bin/console lint:container",
             "@php bin/console doctrine:schema:validate --skip-sync",
             "@php bin/console cache:warmup"
         ]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.0",
+        "symfony/process": "8.1.*"
     }
 }

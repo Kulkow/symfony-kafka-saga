@@ -1,0 +1,20 @@
+services:
+    App\Modules\Wallet\Application\UseCase\WithdrawMoneyUseCase:
+        autowire: true
+        public: true
+
+    App\Modules\Wallet\Tests\Support\TestWithdrawCommand:
+        autowire: true
+        autoconfigure: true
+        arguments:
+            $redisUrl: '%env(REDIS_URL)%'
+
+    App\Modules\Wallet\Application\UseCase\TransferMoneyUseCase:
+        autowire: true
+        public: true
+
+    App\Modules\Wallet\Tests\Support\TestTransferCommand:
+        autowire: true
+        autoconfigure: true
+        arguments:
+            $redisUrl: '%env(REDIS_URL)%'

@@ -4,6 +4,7 @@ doctrine_migrations:
         App\Modules\Order\Infrastructure\Migrations: '%kernel.project_dir%/src/Modules/Order/Infrastructure/Migrations'
         App\Modules\Supply\Infrastructure\Migrations: '%kernel.project_dir%/src/Modules/Supply/Infrastructure/Migrations'
         App\Modules\Warehouse\Infrastructure\Migrations: '%kernel.project_dir%/src/Modules/Warehouse/Infrastructure/Migrations'
+        App\Modules\Wallet\Infrastructure\Migrations: '%kernel.project_dir%/src/Modules/Wallet/Infrastructure/Migrations'
         App\Modules\Saga\Infrastructure\Migrations: '%kernel.project_dir%/src/Modules/Saga/Infrastructure/Migrations'
         App\Shared\Infrastructure\Migrations: '%kernel.project_dir%/src/Shared/Infrastructure/Migrations'
         DoctrineMigrations: '%kernel.project_dir%/src/Shared/Infrastructure/Migrations/Legacy'
@@ -11,6 +12,6 @@ doctrine_migrations:
         Doctrine\Migrations\Version\Comparator: App\Shared\Infrastructure\Persistence\MigrationComparator
     storage:
         table_storage:
-            table_name: public.doctrine_migration_versions
+            table_name: doctrine_migration_versions
     enable_profiler: false
     all_or_nothing: true

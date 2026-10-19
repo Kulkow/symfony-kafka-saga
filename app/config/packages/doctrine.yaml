@@ -24,6 +24,11 @@ doctrine:
                 type: attribute
                 dir: '%kernel.project_dir%/src/Modules/Warehouse/Infrastructure/Persistence/Entity'
                 prefix: 'App\Modules\Warehouse\Infrastructure\Persistence\Entity'
+            Wallet:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Modules/Wallet/Infrastructure/Persistence/Doctrine'
+                prefix: 'App\Modules\Wallet\Infrastructure\Persistence\Doctrine'
             Shared:
                 is_bundle: false
                 type: attribute

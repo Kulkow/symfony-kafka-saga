@@ -1,3 +1,11 @@
+imports:
+    - { resource: '../src/Modules/Catalog/Resources/config/services.yaml' }
+    - { resource: '../src/Modules/Order/Resources/config/services.yaml' }
+    - { resource: '../src/Modules/Saga/Resources/config/services.yaml' }
+    - { resource: '../src/Modules/Supply/Resources/config/services.yaml' }
+    - { resource: '../src/Modules/Warehouse/Resources/config/services.yaml' }
+    - { resource: '../src/Modules/Wallet/Resources/config/services.yaml' }
+
 services:
     _defaults:
         autowire: true
@@ -7,29 +15,15 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Kernel.php'
-            - '../src/Modules/*/Domain/'
-            - '../src/Modules/*/Application/Contract/'
             - '../src/Shared/Domain/'
-            - '../src/Modules/*/Infrastructure/Migrations/'
-            - '../src/Modules/*/Infrastructure/Persistence/Entity/'
             - '../src/Shared/Infrastructure/Migrations/'
             - '../src/Shared/Infrastructure/Persistence/Entity/'
+            - '../src/Modules/'
 
     App\Shared\Application\TransactionManager: '@App\Shared\Infrastructure\Persistence\OrmTransactionManager'
     App\Shared\Application\IdentityGenerator: '@App\Shared\Infrastructure\Persistence\PostgresIdentityGenerator'
     App\Shared\Application\EventPublisher: '@App\Shared\Infrastructure\Messaging\DbalOutboxEventPublisher'
     App\Shared\Application\EventSender: '@App\Shared\Infrastructure\Kafka\KafkaEventSender'
-    App\Modules\Catalog\Domain\ProductRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmProductRepository'
-    App\Modules\Catalog\Domain\MaterialRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmMaterialRepository'
-    App\Modules\Catalog\Domain\MeasureUnitRepository: '@App\Modules\Catalog\Infrastructure\Persistence\OrmMeasureUnitRepository'
-    App\Modules\Catalog\Application\Contract\CatalogReader: '@App\Modules\Catalog\Application\CatalogService'
-    App\Modules\Order\Domain\OrderRepository: '@App\Modules\Order\Infrastructure\Persistence\OrmOrderRepository'
-    App\Modules\Supply\Domain\SupplyRequestRepository: '@App\Modules\Supply\Infrastructure\Persistence\OrmSupplyRequestRepository'
-    App\Modules\Supply\Domain\SupplyOrderRepository: '@App\Modules\Supply\Infrastructure\Persistence\OrmSupplyOrderRepository'
-    App\Modules\Warehouse\Domain\WarehouseRepository: '@App\Modules\Warehouse\Infrastructure\Persistence\OrmWarehouseRepository'
-    App\Modules\Warehouse\Application\ReservationPlanRepository: '@App\Modules\Warehouse\Infrastructure\Persistence\OrmReservationPlanRepository'
-    App\Modules\Warehouse\Application\Contract\WarehouseDirectory: '@App\Modules\Warehouse\Application\WarehouseService'
-
     App\Shared\Infrastructure\Kafka\KafkaClientFactory:
         arguments:
             $bootstrapServers: '%env(KAFKA_BOOTSTRAP_SERVERS)%'
@@ -44,7 +38,8 @@ services:
         arguments:
             $topic: '%env(KAFKA_TOPIC)%'
 
-    App\Modules\Saga\Infrastructure\Console\ConsumeSagaCommand:
+    App\Shared\Infrastructure\Console\PrepareTestDatabaseCommand:
         arguments:
-            $topic: '%env(KAFKA_TOPIC)%'
-            $consumerGroup: '%env(KAFKA_CONSUMER_GROUP)%'
+            $migrations: '@doctrine.migrations.dependency_factory'
+            $testDatabaseUrl: '%env(resolve:WALLET_TEST_DATABASE_URL)%'
+            $applicationDatabaseUrl: '%env(resolve:DATABASE_URL)%'
